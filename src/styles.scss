@@ -1,1 +1,34 @@
 /* You can add global styles to this file, and also import other style files */
+@import './assets/canvas-container.scss';
+
+body {
+  background: #fff;
+  display: flex;
+  height: 100vh;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  position: relative;
+  min-height: 560px;
+  --blur: 2px;
+
+  button {
+    margin-top: 20px;
+  }
+}
+
+app-root, triangle-art {
+  height: 100%;
+  width: 100%;
+}
+
+.flex-div {
+  display: flex;
+  align-items: center;
+  &.column {
+    flex-direction: column;
+  }
+}
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }

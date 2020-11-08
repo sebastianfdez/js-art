@@ -1,0 +1,18 @@
+<div class="container flex-div">
+  <div class="canvas-container flex-div column">
+    <div class="border">
+      <div class="frame">
+        <canvas #canvas></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="options flex-div column">
+    <button mat-raised-button (click)="draw()" color="primary">Reload All</button>
+    <button mat-raised-button (click)="paintLines()" color="primary">Re-paint</button>
+    <mat-radio-group aria-label="Select an option" 
+      [(ngModel)]="fullScreen">
+      <mat-radio-button [value]="false">Normal</mat-radio-button>
+      <mat-radio-button [value]="true">Full screen</mat-radio-button>
+    </mat-radio-group>
+  </div>
+</div>
