@@ -1,4 +1,10 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, NgZone, ViewChild } from '@angular/core';
+import { filter, switchMap } from 'rxjs/operators';
+import WaveformData from 'waveform-data';
+import { JSArtSoundService } from '../services/sound.service';
+import * as Peaks from 'peaks.js';
+import { of } from 'rxjs';
+import { JSArtPaintService } from '../services/paint.service';
 
 @Component({
   selector: 'triangle-art',
@@ -6,20 +12,45 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 })
 export class TriangleArtComponent implements AfterViewInit {
   @ViewChild('canvas', {static: false}) canvas: ElementRef<HTMLCanvasElement>;
+  @ViewChild('overviewcontainer', {static: false}) overview: ElementRef<HTMLElement>;
+  @ViewChild('zoomviewcontainer', {static: false}) zoomview: ElementRef<HTMLElement>;
+  @ViewChild('audio', {static: false}) audio: ElementRef<HTMLAudioElement>;
 
   context: CanvasRenderingContext2D = null;
-  size = 320;
+  size = 580;
 
   colors: number[][] = [];
+  colorTolerance = 0;
   lines: { x: Number, y: Number }[][] = [];
   dots: { x: Number, y: Number }[][] = [];
 
+  // No white spaces
   fullScreen = false;
 
-  constructor() {}
+  constructor(
+    private soundService: JSArtSoundService,
+    private paintService: JSArtPaintService,
+
+  ) {}
 
   ngAfterViewInit() {
     this.draw();
+    // this.soundService.listenSound().pipe(
+    //   filter((blob: Blob) => !!blob),
+    //   switchMap((blob: Blob) => {
+    //     return this.soundService.getInfoWave(blob);
+    //   }),
+    // ).subscribe((wave: WaveformData) => {
+    //   console.log({ wave });
+    // });
+    this.soundService.init(this.overview.nativeElement, this.zoomview.nativeElement, this.audio.nativeElement)
+    .subscribe((peak) => {
+      console.log(peak);
+      if (peak) {
+        console.log(peak.points.getPoints());
+        console.log(peak.segments.getSegments());
+      }
+    });
   }
 
   drawTriangle(pointA, pointB, pointC, color) {
@@ -55,24 +86,36 @@ export class TriangleArtComponent implements AfterViewInit {
 
   getRandomColors(): number[][] {
     const colors = [];
+    // Number of possible colors colors
     const colornum = Math.random()*4 + 2;
     for (let i = 0; i < colornum; i++) {
-      var red = Math.floor(Math.random()*50 + 100);
-      var blue = Math.floor(Math.random()*50 + 100);
-      var green = Math.floor(Math.random()*50 + 100);
-      colors.push([red, blue, green]);
+      // 0% tolerance => Choose between (100, 150)
+      // 100% tolerance => Choose between (100, 255)
+      const red = Math.floor(Math.random()*(50 + 105*this.colorTolerance/100) + 100);
+      const blue = Math.floor(Math.random()*(50 + 105*this.colorTolerance/100) + 100);
+      const green = Math.floor(Math.random()*(50 + 105*this.colorTolerance/100) + 100);
+      const beauty = this.beauty();
+      const color = [red * beauty[0], blue * beauty[1], green * beauty[2]];
+      colors.push(color);
     }
     return colors;
+  }
+
+  beauty(): number[] {
+    const combinations = [[ 1, 1, 1 ], [ 1, 1, 0 ], [ 1, 0, 1 ], [ 0, 1, 1 ]];
+    return combinations[Math.floor(Math.random() * 3.9999999)];
   }
 
   getRandomLines(): { x: Number, y: Number }[][] {
     let odd = false;
     const lines: { x: Number, y: Number }[][] = [];
-    const gap = this.size / (Math.floor((Math.random())*15) + 6);
-    for (var y = this.fullScreen ? -2*gap : gap/2; y <= (this.fullScreen ? (this.size + 3*gap) : (this.size + gap/2)); y+= gap) {
+    const numberOfRows = Math.floor((Math.random())*10) + 10;
+    const gap = this.size / numberOfRows;
+    // If the fullscreen flag is active, start from a negative position
+    for (var y = this.fullScreen ? -2*gap : gap/2; y <= (this.fullScreen ? (this.size + 3*gap) : (this.size)); y+= gap) {
       odd = !odd;
       const line: { x: Number, y: Number }[] = [];
-      for (var x= this.fullScreen ? -2*gap : gap/2; x <= (this.fullScreen ? (this.size + 2*gap) : this.size); x+= gap) {
+      for (var x= this.fullScreen ? -2*gap : gap/2; x <= (this.fullScreen ? (this.size + 2*gap) : this.size - gap); x+= gap) {
         line.push({
           x: x + (Math.random()*.8 - .4) * gap  + (odd ? gap/2 : 0),
           y: y + (Math.random()*.8 - .4) * gap
@@ -100,21 +143,12 @@ export class TriangleArtComponent implements AfterViewInit {
     return dotLines;
   }
 
+  repaint() {
+    this.colors = this.getRandomColors();
+    this.paintLines();
+  }
+
   paintLines() {
-    for(var i = 0; i < this.dots.length - 1; i++) {
-      var color = this.colors[Math.floor(this.colors.length * Math.random())];
-      for(var j = 0; j < this.dots[i].length - 2; j++) {
-        // var percent = (i + y)/(dotLine.length + lines.length)*0.6+ 0.4;
-        var percent = Math.random()*0.4+ 0.6;
-        const color_ = 'rgba(' + Math.floor(color[0] - percent*100) + ',' + Math.floor(color[1] - percent*100) + ',' + Math.floor(color[2] - percent*100) + ',' + percent + ')';
-        // color_ = 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',' + percent + ')';
-        const time = Math.pow(this.dots.length/2 - i, 2) + Math.pow(this.dots[i].length/2 - j, 2);
-        const max = Math.pow(this.dots.length/2, 2) + Math.pow(this.dots[i].length/2, 2);
-        setTimeout(function(i , j) {
-          this.drawTriangle(this.dots[i][j], this.dots[i][j+1], this.dots[i][j+2], color_);
-        }.bind(this, i, j), time/max*1000);
-        // this.drawTriangle(this.dots[i][j], this.dots[i][j+1], this.dots[i][j+2], color_);
-      }
-    }
+    this.paintService.paint(this.dots, this.context, this.colors);
   }
 }
