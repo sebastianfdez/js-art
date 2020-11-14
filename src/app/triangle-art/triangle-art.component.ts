@@ -2,8 +2,6 @@ import { AfterViewInit, Component, ElementRef, NgZone, ViewChild } from '@angula
 import { filter, switchMap } from 'rxjs/operators';
 import WaveformData from 'waveform-data';
 import { JSArtSoundService } from '../services/sound.service';
-import * as Peaks from 'peaks.js';
-import { of } from 'rxjs';
 import { JSArtPaintService } from '../services/paint.service';
 
 @Component({
@@ -12,11 +10,14 @@ import { JSArtPaintService } from '../services/paint.service';
 })
 export class TriangleArtComponent implements AfterViewInit {
   @ViewChild('canvas', {static: false}) canvas: ElementRef<HTMLCanvasElement>;
+  @ViewChild('canvas2', {static: false}) canvas2: ElementRef<HTMLCanvasElement>;
   @ViewChild('overviewcontainer', {static: false}) overview: ElementRef<HTMLElement>;
   @ViewChild('zoomviewcontainer', {static: false}) zoomview: ElementRef<HTMLElement>;
   @ViewChild('audio', {static: false}) audio: ElementRef<HTMLAudioElement>;
 
   context: CanvasRenderingContext2D = null;
+  wavecontext: CanvasRenderingContext2D = null;
+  waveXPos = 0;
   size = 580;
 
   colors: number[][] = [];
@@ -35,22 +36,67 @@ export class TriangleArtComponent implements AfterViewInit {
 
   ngAfterViewInit() {
     this.draw();
-    // this.soundService.listenSound().pipe(
-    //   filter((blob: Blob) => !!blob),
-    //   switchMap((blob: Blob) => {
-    //     return this.soundService.getInfoWave(blob);
-    //   }),
-    // ).subscribe((wave: WaveformData) => {
-    //   console.log({ wave });
-    // });
-    this.soundService.init(this.overview.nativeElement, this.zoomview.nativeElement, this.audio.nativeElement)
-    .subscribe((peak) => {
-      console.log(peak);
-      if (peak) {
-        console.log(peak.points.getPoints());
-        console.log(peak.segments.getSegments());
-      }
+    this.createWaveCanvas();
+    this.soundService.listenSound().pipe(
+      filter((blob: Blob) => !!blob),
+      switchMap((blob: Blob) => {
+        return this.soundService.getInfoWave(blob);
+      }),
+    ).subscribe((waveform: WaveformData) => {
+      this.drawWave(waveform);
     });
+  }
+
+  createWaveCanvas() {
+    this.wavecontext = this.canvas2.nativeElement.getContext('2d');
+    this.canvas2.nativeElement.width = 2000;
+    this.canvas2.nativeElement.height = 300;
+    this.canvas2.nativeElement.parentElement.scrollLeft = 1000;
+  }
+
+  drawWave(waveform: WaveformData) {
+    const scaleY = (amplitude, height) => {
+      const range = 256;
+      const offset = 128;
+      return height - ((amplitude + offset) * height) / range;
+    }
+    this.wavecontext.beginPath();
+    const channel = waveform.channel(0);
+  
+    if (this.waveXPos + waveform.length > this.wavecontext.canvas.width) { 
+      var imageData = this.wavecontext.getImageData(
+        waveform.length + 1, 0, this.waveXPos - waveform.length - 1, this.wavecontext.canvas.height,
+      );
+      this.wavecontext.putImageData(imageData, 0, 0);
+      this.wavecontext.clearRect(
+        this.waveXPos - waveform.length - 1, 0, waveform.length + 1, this.wavecontext.canvas.height,
+      );
+      this.waveXPos = this.waveXPos - waveform.length - 1;
+    }
+
+    let avgIntensity = 0;
+    // Loop forwards, drawing the upper half of the waveform
+    for (let x = 0; x < waveform.length; x++) {
+      const val = channel.max_sample(x);
+      avgIntensity += val / waveform.length;
+      this.wavecontext.lineTo(x + 0.5 + this.waveXPos, scaleY(val, this.canvas2.nativeElement.height) + 0.5);
+    }
+    
+    // Loop backwards, drawing the lower half of the waveform
+    for (let x = waveform.length - 1; x >= 0; x--) {
+      const val = channel.min_sample(x);
+      this.wavecontext.lineTo(x + 0.5 + this.waveXPos, scaleY(val, this.canvas2.nativeElement.height) + 0.5);
+    }
+    if (avgIntensity > 60) {
+      console.log('BOOOOM');
+      this.repaint(true);
+    }
+  
+    this.waveXPos = this.waveXPos + waveform.length;
+    
+    this.wavecontext.closePath();
+    this.wavecontext.stroke();
+    this.wavecontext.fill();
   }
 
   drawTriangle(pointA, pointB, pointC, color) {
@@ -143,12 +189,12 @@ export class TriangleArtComponent implements AfterViewInit {
     return dotLines;
   }
 
-  repaint() {
+  repaint(boom = false) {
     this.colors = this.getRandomColors();
-    this.paintLines();
+    this.paintLines(boom);
   }
 
-  paintLines() {
-    this.paintService.paint(this.dots, this.context, this.colors);
+  paintLines(boom = false) {
+    this.paintService.paint(this.dots, this.context, this.colors, boom);
   }
 }

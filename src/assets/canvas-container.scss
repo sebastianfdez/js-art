@@ -47,4 +47,19 @@
   .option-title {
     margin-top: 25px;
   }
+
+  mat-radio-group {
+    mat-radio-button {
+      margin-right: 15px;
+    }
+  }
+
+  .canvas-wave-container {
+    width: 90%;
+    overflow-x: scroll;
+
+    &::-webkit-scrollbar-track {
+      background-color: transparent;
+    }
+  }
 }

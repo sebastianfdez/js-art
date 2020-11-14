@@ -10,7 +10,7 @@ export class JSArtPaintService {
     private ngZone: NgZone,
   ) { }
 
-  paint(dots: { x: Number, y: Number }[][], context: CanvasRenderingContext2D, colors) {
+  paint(dots: { x: Number, y: Number }[][], context: CanvasRenderingContext2D, colors, boom = false) {
     this.dots = dots;
     this.context = context;
     const randomPaint = Math.random();
@@ -22,14 +22,14 @@ export class JSArtPaintService {
         var percent = Math.random()*0.4+ 0.6;
         const color_ = 'rgba(' + Math.floor(color[0] - percent*100) + ',' + Math.floor(color[1] - percent*100) + ',' + Math.floor(color[2] - percent*100) + ',' + percent + ')';
         // color_ = 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',' + percent + ')';
-        if (randomPaint < 1/5) {
-          this.paintOutsideToCenter(i, j, color_, this.dots.length, this.dots[0].length - 2);
+        if (randomPaint < 1/5 || boom) {
+          this.paintCenterToOutside(i, j, color_, this.dots.length, this.dots[0].length - 2);
         } else if (randomPaint < 2/5) {
           this.paintLeftToRight(i, j, color_, this.dots.length, this.dots[0].length - 2);
         } else if (randomPaint < 3/5) {
           this.paintUptoDown(i, j, color_, this.dots.length, this.dots[0].length - 2);
         } else if (randomPaint < 4/5) {
-          this.paintCenterToOutside(i, j, color_, this.dots.length, this.dots[0].length - 2);
+          this.paintOutsideToCenter(i, j, color_, this.dots.length, this.dots[0].length - 2);
         } else {
           this.paintDiagonalFromUpLeft(i, j, color_, this.dots.length, this.dots[0].length - 2);
         }
