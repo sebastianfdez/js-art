@@ -9,13 +9,14 @@ export class JSArtSoundService {
   recorder: RecordRTC = null;
   blobSubject: BehaviorSubject<Blob> = new BehaviorSubject<Blob>(null);
   audioContext = new AudioContext();
+  started = false;
 
   constructor() {
     // RecordRTC
     navigator.mediaDevices.getUserMedia({
       video: false,
       audio: true
-    }).then((camera) => {
+    }).then((audio) => {
       const ondataavailable = (blob: Blob) => {
         this.blobSubject.next(blob);
       };
@@ -29,27 +30,25 @@ export class JSArtSoundService {
       };
   
       // initiating the recorder
-      this.recorder = RecordRTC(camera, recordingHints);
-      this.startRecording();
+      this.recorder = RecordRTC(audio, recordingHints);
     });
+  }
+
+  record() {
+    if (!this.started) {
+      this.recorder.startRecording();
+      this.started = true;
+      return;
+    }
+    this.recorder.resumeRecording();
+  }
+
+  stop() {
+    this.recorder.pauseRecording();
   }
   
   listenSound(): Observable<Blob> {
     return this.blobSubject.asObservable();
-  }
-
-  startRecording() {
-    this.recorder.startRecording();
-
-    // auto stop recording after 5 seconds
-    const milliSeconds = 60 * 1000;
-    setTimeout(() => {
-        // stop recording
-        this.recorder.stopRecording(() => {
-            // get recorded blob
-            const blob = this.recorder.getBlob();
-        });
-    }, milliSeconds);
   }
 
   getInfoWave(blob: Blob): Observable<WaveformData> {

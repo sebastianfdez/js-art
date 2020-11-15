@@ -1,6 +1,12 @@
 /* You can add global styles to this file, and also import other style files */
+
+$jsart-mobile-max: 800px;
+
 @import './assets/canvas-container.scss';
 @import './assets/space.scss';
+@import "./assets/scss/fontawesome.scss";
+@import "./assets/scss/solid.scss";
+@import "./assets/scss/brands.scss";
 
 body {
   background: #fff;
@@ -33,3 +39,31 @@ app-root, triangle-art {
 }
 html, body { height: 100%; }
 body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.credits {
+  position: absolute;
+  padding: 10px;
+  background-color: #000000;
+  color: #FFFFFF;
+  bottom: 33%;
+  text-decoration: none;
+  left: calc(50% - 100px);
+
+  &:before {
+    @extend %fa-icon;
+    @extend .fab;
+    content: fa-content($fa-var-github);
+    margin-right: 5px;
+    font-size: 20px;
+  }
+  a {
+    color: #FFFFFF;
+    text-decoration: none;
+  }
+
+  @media (min-width: $jsart-mobile-max) {
+    bottom: 10px;
+    left: calc(35% - 100px);
+    padding: 20px;
+  }
+}

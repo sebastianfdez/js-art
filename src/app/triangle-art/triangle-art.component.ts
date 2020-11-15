@@ -3,6 +3,7 @@ import { filter, switchMap } from 'rxjs/operators';
 import WaveformData from 'waveform-data';
 import { JSArtSoundService } from '../services/sound.service';
 import { JSArtPaintService } from '../services/paint.service';
+import { Coordinate } from '../models/coordinate';
 
 @Component({
   selector: 'triangle-art',
@@ -16,14 +17,18 @@ export class TriangleArtComponent implements AfterViewInit {
   @ViewChild('audio', {static: false}) audio: ElementRef<HTMLAudioElement>;
 
   context: CanvasRenderingContext2D = null;
+
+  // Sound and waves
   wavecontext: CanvasRenderingContext2D = null;
   waveXPos = 0;
   size = 580;
+  peak = false;
+  boomSensibility = 0;
 
   colors: number[][] = [];
   colorTolerance = 0;
-  lines: { x: Number, y: Number }[][] = [];
-  dots: { x: Number, y: Number }[][] = [];
+  lines: Coordinate[][] = [];
+  dots: Coordinate[][] = [];
 
   // No white spaces
   fullScreen = false;
@@ -47,6 +52,14 @@ export class TriangleArtComponent implements AfterViewInit {
     });
   }
 
+  record() {
+    this.soundService.record();
+  }
+
+  stop() {
+    this.soundService.stop();
+  }
+
   createWaveCanvas() {
     this.wavecontext = this.canvas2.nativeElement.getContext('2d');
     this.canvas2.nativeElement.width = 2000;
@@ -55,7 +68,7 @@ export class TriangleArtComponent implements AfterViewInit {
   }
 
   drawWave(waveform: WaveformData) {
-    const scaleY = (amplitude, height) => {
+    const scaleY = (amplitude: number, height: number) => {
       const range = 256;
       const offset = 128;
       return height - ((amplitude + offset) * height) / range;
@@ -87,19 +100,19 @@ export class TriangleArtComponent implements AfterViewInit {
       const val = channel.min_sample(x);
       this.wavecontext.lineTo(x + 0.5 + this.waveXPos, scaleY(val, this.canvas2.nativeElement.height) + 0.5);
     }
-    if (avgIntensity > 60) {
-      console.log('BOOOOM');
+    if (avgIntensity > (20 + this.boomSensibility*2) && !this.peak) {
       this.repaint(true);
+      this.peak = true;
+    } else if (avgIntensity < (10 + this.boomSensibility)) {
+      this.peak = false;
     }
-  
     this.waveXPos = this.waveXPos + waveform.length;
-    
     this.wavecontext.closePath();
     this.wavecontext.stroke();
     this.wavecontext.fill();
   }
 
-  drawTriangle(pointA, pointB, pointC, color) {
+  drawTriangle(pointA: Coordinate, pointB: Coordinate, pointC: Coordinate, color: string) {
     if (pointA && pointB && pointC) {
       this.context.beginPath();
       this.context.moveTo(pointA.x, pointA.y);
@@ -117,6 +130,7 @@ export class TriangleArtComponent implements AfterViewInit {
     if (this.canvas) {
       this.context = this.canvas.nativeElement.getContext('2d');
       const dpr = window.devicePixelRatio;
+      console.log(dpr);
       this.canvas.nativeElement.width = this.size * dpr;
       this.canvas.nativeElement.height = this.size * dpr;
       this.context.scale(dpr, dpr);
@@ -133,13 +147,13 @@ export class TriangleArtComponent implements AfterViewInit {
   getRandomColors(): number[][] {
     const colors = [];
     // Number of possible colors colors
-    const colornum = Math.random()*4 + 2;
+    const colornum = Math.random()*4 + 2; // Between 2 and 6 colors
     for (let i = 0; i < colornum; i++) {
       // 0% tolerance => Choose between (100, 150)
-      // 100% tolerance => Choose between (100, 255)
-      const red = Math.floor(Math.random()*(50 + 105*this.colorTolerance/100) + 100);
-      const blue = Math.floor(Math.random()*(50 + 105*this.colorTolerance/100) + 100);
-      const green = Math.floor(Math.random()*(50 + 105*this.colorTolerance/100) + 100);
+      // 100% tolerance => Choose between (0, 255)
+      const red = Math.floor(127 + (25 + this.colorTolerance)*(Math.random()*2 - 1));
+      const blue = Math.floor(127 + (25 + this.colorTolerance)*(Math.random()*2 - 1));
+      const green = Math.floor(127 + (25 + this.colorTolerance)*(Math.random()*2 - 1));
       const beauty = this.beauty();
       const color = [red * beauty[0], blue * beauty[1], green * beauty[2]];
       colors.push(color);
@@ -152,15 +166,15 @@ export class TriangleArtComponent implements AfterViewInit {
     return combinations[Math.floor(Math.random() * 3.9999999)];
   }
 
-  getRandomLines(): { x: Number, y: Number }[][] {
+  getRandomLines(): Coordinate[][] {
     let odd = false;
-    const lines: { x: Number, y: Number }[][] = [];
+    const lines: Coordinate[][] = [];
     const numberOfRows = Math.floor((Math.random())*10) + 10;
     const gap = this.size / numberOfRows;
     // If the fullscreen flag is active, start from a negative position
     for (var y = this.fullScreen ? -2*gap : gap/2; y <= (this.fullScreen ? (this.size + 3*gap) : (this.size)); y+= gap) {
       odd = !odd;
-      const line: { x: Number, y: Number }[] = [];
+      const line: Coordinate[] = [];
       for (var x= this.fullScreen ? -2*gap : gap/2; x <= (this.fullScreen ? (this.size + 2*gap) : this.size - gap); x+= gap) {
         line.push({
           x: x + (Math.random()*.8 - .4) * gap  + (odd ? gap/2 : 0),
@@ -173,15 +187,15 @@ export class TriangleArtComponent implements AfterViewInit {
     return lines;
   }
 
-  getRandomDots(): { x: Number, y: Number }[][] {
+  getRandomDots(): Coordinate[][] {
     let odd = true;
-    const dotLines: { x: Number; y: Number; }[][] = [];
+    const dotLines: Coordinate[][] = [];
     for(var y = 0; y < this.lines.length - 1; y++) {
       odd = !odd;
-      const dotLine: { x: Number; y: Number; }[] = [];
+      const dotLine: Coordinate[] = [];
   
       for(var i = 0; i < this.lines[y].length; i++) {
-        dotLine.push(odd ? this.lines[y][i]   : this.lines[y+1][i]);
+        dotLine.push(odd ? this.lines[y][i] : this.lines[y+1][i]);
         dotLine.push(odd ? this.lines[y+1][i] : this.lines[y][i]);
       }
       dotLines.push(dotLine);

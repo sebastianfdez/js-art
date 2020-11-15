@@ -1,34 +1,45 @@
 <div class="container flex-div">
   <div class="canvas-container flex-div column">
     <div class="border">
-      <div class="frame">
-        <canvas #canvas></canvas>
-      </div>
+      <canvas #canvas></canvas>
     </div>
   </div>
-  <div class="options flex-div column">
-    <button mat-raised-button (click)="draw()" color="primary">Reload All</button>
-    <button mat-raised-button (click)="repaint()" color="primary">Re-paint</button>
-    <h3 class="option-title">Render type</h3>
-    <mat-radio-group aria-label="Select an option" 
-      [color]="'primary'"
-      [(ngModel)]="fullScreen">
-      <mat-radio-button [value]="false">Normal</mat-radio-button>
-      <mat-radio-button [value]="true">Full screen</mat-radio-button>
-    </mat-radio-group>
-    <h3 class="option-title">Color tolerance</h3>
-    <mat-slider
-      [(value)]="colorTolerance"
-      [color]="'primary'"
-      min="0"
-      max="100"></mat-slider>
-    <br>
+  <div class="options flex-div">
+    <div class="buttons flex-div">
+      <button mat-raised-button (click)="draw()" color="primary">Reload All</button>
+      <button mat-raised-button (click)="repaint()" color="primary">Re-paint</button>
+    </div>
+    <div class="feature flex-div column">
+      <h3 class="option-title">Render type</h3>
+      <mat-radio-group aria-label="Select an option" 
+        [color]="'primary'"
+        [(ngModel)]="fullScreen">
+        <mat-radio-button [value]="false">Normal</mat-radio-button>
+        <mat-radio-button [value]="true">Full screen</mat-radio-button>
+      </mat-radio-group>
+    </div>
+    <div class="feature flex-div column">
+      <h3 class="option-title">Color tolerance</h3>
+      <mat-slider
+        [(value)]="colorTolerance"
+        [color]="'primary'"
+        min="0"
+        max="100"></mat-slider>
+    </div>
     <div class="canvas-wave-container flex-div column">
       <canvas #canvas2></canvas>
     </div>
-
-    <!-- <div #zoomviewcontainer style="width: 200px; height: 200px; background-color: aquamarine;"></div>
-    <div #overviewcontainer style="width: 200px; height: 200px; background-color: aquamarine;"></div> 
-    <audio #audio src="https://file-examples-com.github.io/uploads/2017/11/file_example_MP3_700KB.mp3"></audio>-->
+    <div class="feature flex-div column">
+      <h3 class="option-title">Boom sensibility</h3>
+      <mat-slider
+        [(value)]="boomSensibility"
+        [color]="'primary'"
+        min="0"
+        max="100"></mat-slider>
+    </div>
+    <div class="buttons flex-div">
+      <button mat-raised-button (click)="record()" color="primary">Record</button>
+      <button mat-raised-button (click)="stop()" color="primary">Stop</button>
+    </div>
   </div>
 </div>

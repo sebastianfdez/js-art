@@ -35,11 +35,16 @@ app-jsart-space {
 $shadows-small: multiple-box-shadow(700);
 $shadows-medium: multiple-box-shadow(200);
 $shadows-big: multiple-box-shadow(100);
-$shadows-hor: multiple-box-shadowH(4);
+$shadows-hor: multiple-box-shadowH(9);
 
     
 .stars {
   background: transparent;
+  display: none;
+
+  @media (min-width: $jsart-mobile-max) {
+    display: initial;
+  }
     
   &:after {
     content: "";
@@ -86,11 +91,12 @@ $shadows-hor: multiple-box-shadowH(4);
     }
   }
   
-  &.stars4 {
+  &.stars4,
+  &.stars5 {
     width: 10px;
     height: 3px;
     box-shadow: $shadows-hor;
-    animation: animStarHor 20s linear infinite;
+    animation: animStarHor 5s linear infinite;
      
     &:after {
       width: 10px;
@@ -100,7 +106,30 @@ $shadows-hor: multiple-box-shadowH(4);
       box-shadow: $shadows-hor;
     }
   }
+  &.stars5 {
+    animation: animStarHor2 30s linear infinite;
+  }
+  
+  &.stars6,
+  &.stars7 {
+    width: 10px;
+    height: 3px;
+    box-shadow: $shadows-hor;
+    animation: animStarHor3 20s linear infinite;
+     
+    &:after {
+      width: 10px;
+      height: 3px;
+      right: 10000px;
+      top: 0px;
+      box-shadow: $shadows-hor;
+    }
+  }
+  &.stars7 {
+    animation: animStarHor4 10s linear infinite;
+  }
 }
+
 
 @keyframes animStar {
   0% {
@@ -114,10 +143,40 @@ $shadows-hor: multiple-box-shadowH(4);
 
 @keyframes animStarHor {
   0% {
-    transform: translateX(0px);
+    transform: translate(0px, 0px);
   }
 
   100% {
-    transform: translateX(-10000px);
+    transform: translate(-10000px, 2000px);
+  }
+}
+
+@keyframes animStarHor2 {
+  0% {
+    transform: translate(0px, 0px);
+  }
+
+  100% {
+    transform: translate(-10000px, -2000px);
+  }
+}
+
+@keyframes animStarHor3 {
+  0% {
+    transform: translate(-10000px, 0px);
+  }
+
+  100% {
+    transform: translate(0px, 2000px);
+  }
+}
+
+@keyframes animStarHor4 {
+  0% {
+    transform: translate(-10000px, 0px);
+  }
+
+  100% {
+    transform: translate(0px, -2000px);
   }
 }

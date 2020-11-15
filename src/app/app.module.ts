@@ -5,6 +5,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { TriangleArtComponent } from './triangle-art/triangle-art.component';
 import { JSArtSpaceComponent } from './space/space.component';
+import { JSArtMandalaComponent } from './mandala/mandala.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FormsModule } from '@angular/forms';
 import { JSArtSoundService } from './services/sound.service';
@@ -20,6 +21,7 @@ import { MatSliderModule } from '@angular/material/slider';
     AppComponent,
     TriangleArtComponent,
     JSArtSpaceComponent,
+    JSArtMandalaComponent,
   ],
   imports: [
     BrowserModule,

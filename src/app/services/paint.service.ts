@@ -1,8 +1,9 @@
 import { Injectable, NgZone } from '@angular/core';
+import { Coordinate } from '../models/coordinate';
 
 @Injectable()
 export class JSArtPaintService {
-  dots: { x: Number, y: Number }[][] = [];
+  dots: Coordinate[][] = [];
   context: CanvasRenderingContext2D = null;
   max = null;
 
@@ -10,7 +11,7 @@ export class JSArtPaintService {
     private ngZone: NgZone,
   ) { }
 
-  paint(dots: { x: Number, y: Number }[][], context: CanvasRenderingContext2D, colors, boom = false) {
+  paint(dots: Coordinate[][], context: CanvasRenderingContext2D, colors, boom = false) {
     this.dots = dots;
     this.context = context;
     const randomPaint = Math.random();
